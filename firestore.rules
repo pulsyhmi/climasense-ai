@@ -1,0 +1,243 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: Default-deny all unmapped operations
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ---------------------------------------------------------
+    // Helper Primitives & Security Predicates
+    // ---------------------------------------------------------
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isManager() {
+      return isSignedIn() && exists(/databases/$(database)/documents/managers/$(request.auth.uid));
+    }
+
+    // ---------------------------------------------------------
+    // Entity Validation Helpers
+    // ---------------------------------------------------------
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['userId', 'email', 'displayName', 'role', 'townshipId', 'preferences', 'createdAt'])
+        && data.keys().hasOnly(['userId', 'email', 'displayName', 'role', 'townshipId', 'preferences', 'createdAt', 'updatedAt'])
+        && data.userId == request.auth.uid
+        && data.email is string && data.email.size() <= 256
+        && data.displayName is string && data.displayName.size() > 0 && data.displayName.size() <= 100
+        && data.role in ['resident', 'township_manager']
+        && (data.role != 'township_manager' || isManager())
+        && data.townshipId is string && data.townshipId.size() <= 64
+        && data.preferences is map
+        && data.preferences.keys().hasAll(['alertHeat', 'alertRain', 'alertAqi'])
+        && data.preferences.alertHeat is bool
+        && data.preferences.alertRain is bool
+        && data.preferences.alertAqi is bool
+        && data.createdAt is string && data.createdAt.size() <= 64
+        && (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 64));
+    }
+
+    function isValidGreenActivity(data) {
+      return data.keys().hasAll(['id', 'userId', 'userName', 'category', 'title', 'metricDescription', 'pointsAwarded', 'townshipId', 'createdAt'])
+        && data.keys().hasOnly(['id', 'userId', 'userName', 'category', 'title', 'metricDescription', 'pointsAwarded', 'townshipId', 'notes', 'timestamp', 'createdAt'])
+        && data.userId == request.auth.uid
+        && data.id is string && data.id.size() <= 128
+        && data.userName is string && data.userName.size() <= 100
+        && data.category in ['tree_planting', 'cycling', 'walking', 'recycling', 'energy_conservation', 'water_conservation', 'composting', 'food_waste']
+        && data.title is string && data.title.size() > 0 && data.title.size() <= 150
+        && data.metricDescription is string && data.metricDescription.size() <= 150
+        && data.pointsAwarded is number && data.pointsAwarded >= 0 && data.pointsAwarded <= 1000
+        && data.townshipId is string && data.townshipId.size() <= 64
+        && (!('notes' in data) || (data.notes is string && data.notes.size() <= 500))
+        && (!('timestamp' in data) || (data.timestamp is string && data.timestamp.size() <= 64))
+        && data.createdAt is string && data.createdAt.size() <= 64;
+    }
+
+    function isValidRewardBalance(data) {
+      return data.keys().hasAll(['userId', 'points', 'lifetimePoints', 'tier', 'updatedAt'])
+        && data.keys().hasOnly(['userId', 'points', 'lifetimePoints', 'tier', 'updatedAt'])
+        && data.userId == request.auth.uid
+        && data.points is number && data.points >= 0
+        && data.lifetimePoints is number && data.lifetimePoints >= 0
+        && data.tier is string && data.tier.size() <= 64
+        && data.updatedAt is string && data.updatedAt.size() <= 64;
+    }
+
+    function isValidTownshipConfig(data) {
+      return data.keys().hasAll(['townshipId', 'name', 'heatModerateC', 'heatElevatedC', 'rainModerateMm', 'rainElevatedMm', 'aqiModerate', 'aqiElevated', 'greenTargetPct', 'updatedAt'])
+        && data.keys().hasOnly(['townshipId', 'name', 'heatModerateC', 'heatElevatedC', 'rainModerateMm', 'rainElevatedMm', 'aqiModerate', 'aqiElevated', 'greenTargetPct', 'updatedAt', 'updatedBy'])
+        && data.townshipId is string && data.townshipId.size() <= 64
+        && data.name is string && data.name.size() <= 100
+        && data.heatModerateC is number && data.heatElevatedC is number
+        && data.rainModerateMm is number && data.rainElevatedMm is number
+        && data.aqiModerate is number && data.aqiElevated is number
+        && data.greenTargetPct is number && data.greenTargetPct >= 0 && data.greenTargetPct <= 100
+        && data.updatedAt is string && data.updatedAt.size() <= 64
+        && (!('updatedBy' in data) || (data.updatedBy is string && data.updatedBy.size() <= 128));
+    }
+
+    function isValidManagerNote(data) {
+      return data.keys().hasAll(['id', 'townshipId', 'title', 'zoneId', 'category', 'content', 'authorId', 'authorName', 'createdAt'])
+        && data.keys().hasOnly(['id', 'townshipId', 'title', 'zoneId', 'category', 'content', 'authorId', 'authorName', 'createdAt', 'updatedAt'])
+        && data.id is string && data.id.size() <= 128
+        && data.townshipId is string && data.townshipId.size() <= 64
+        && data.title is string && data.title.size() > 0 && data.title.size() <= 150
+        && data.zoneId is string && data.zoneId.size() <= 64
+        && data.category in ['heat_advisory', 'drainage_maintenance', 'tree_planting', 'infrastructure']
+        && data.content is string && data.content.size() > 0 && data.content.size() <= 1000
+        && data.authorId == request.auth.uid
+        && data.authorName is string && data.authorName.size() <= 100
+        && data.createdAt is string && data.createdAt.size() <= 64
+        && (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 64));
+    }
+
+    // ---------------------------------------------------------
+    // Collection: /users/{userId}
+    // ---------------------------------------------------------
+    match /users/{userId} {
+      allow get: if isSignedIn() && (request.auth.uid == userId || isManager());
+      // No blanket list allowed for users to protect PII
+      allow list: if false;
+
+      allow create: if isSignedIn()
+        && isValidId(userId)
+        && request.auth.uid == userId
+        && isValidUserProfile(incoming());
+
+      allow update: if isSignedIn()
+        && isValidId(userId)
+        && request.auth.uid == userId
+        && isValidUserProfile(incoming())
+        && incoming().userId == existing().userId
+        && incoming().createdAt == existing().createdAt
+        && (incoming().role == existing().role || isManager())
+        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'preferences', 'townshipId', 'updatedAt', 'role']);
+
+      allow delete: if false;
+    }
+
+    // ---------------------------------------------------------
+    // Collection: /managers/{userId} (Authority Roster)
+    // ---------------------------------------------------------
+    match /managers/{userId} {
+      allow get: if isSignedIn();
+      allow list: if isManager();
+      allow write: if false; // Provisioned via administrative authority
+    }
+
+    // ---------------------------------------------------------
+    // Collection: /green_activities/{activityId}
+    // ---------------------------------------------------------
+    match /green_activities/{activityId} {
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || isManager());
+
+      // Query Enforcer: List must be explicitly filtered by the authenticated user's ID
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      allow create: if isSignedIn()
+        && isValidId(activityId)
+        && incoming().id == activityId
+        && isValidGreenActivity(incoming());
+
+      allow update: if isSignedIn()
+        && isValidId(activityId)
+        && existing().userId == request.auth.uid
+        && isValidGreenActivity(incoming())
+        && incoming().id == existing().id
+        && incoming().userId == existing().userId
+        && incoming().createdAt == existing().createdAt
+        && incoming().townshipId == existing().townshipId
+        && incoming().diff(existing()).affectedKeys().hasOnly(['notes', 'title', 'metricDescription']);
+
+      allow delete: if isSignedIn()
+        && isValidId(activityId)
+        && (existing().userId == request.auth.uid || isManager());
+    }
+
+    // ---------------------------------------------------------
+    // Collection: /reward_balances/{userId}
+    // ---------------------------------------------------------
+    match /reward_balances/{userId} {
+      allow get: if isSignedIn() && (request.auth.uid == userId || isManager());
+      allow list: if false; // Direct lookup by user ID only
+
+      allow create: if isSignedIn()
+        && isValidId(userId)
+        && request.auth.uid == userId
+        && isValidRewardBalance(incoming());
+
+      allow update: if isSignedIn()
+        && isValidId(userId)
+        && request.auth.uid == userId
+        && isValidRewardBalance(incoming())
+        && incoming().userId == existing().userId
+        && incoming().diff(existing()).affectedKeys().hasOnly(['points', 'lifetimePoints', 'tier', 'updatedAt']);
+
+      allow delete: if false;
+    }
+
+    // ---------------------------------------------------------
+    // Collection: /township_configs/{townshipId}
+    // ---------------------------------------------------------
+    match /township_configs/{townshipId} {
+      allow get: if true;
+      allow list: if true;
+
+      allow create: if isManager()
+        && isValidId(townshipId)
+        && incoming().townshipId == townshipId
+        && isValidTownshipConfig(incoming());
+
+      allow update: if isManager()
+        && isValidId(townshipId)
+        && incoming().townshipId == existing().townshipId
+        && isValidTownshipConfig(incoming())
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'name', 'heatModerateC', 'heatElevatedC', 'rainModerateMm',
+          'rainElevatedMm', 'aqiModerate', 'aqiElevated', 'greenTargetPct',
+          'updatedAt', 'updatedBy'
+        ]);
+
+      allow delete: if false;
+    }
+
+    // ---------------------------------------------------------
+    // Collection: /manager_notes/{noteId}
+    // ---------------------------------------------------------
+    match /manager_notes/{noteId} {
+      // Community advisory notes are publicly readable by all residents
+      allow get: if true;
+      allow list: if true;
+
+      allow create: if isManager()
+        && isValidId(noteId)
+        && incoming().id == noteId
+        && isValidManagerNote(incoming());
+
+      allow update: if isManager()
+        && isValidId(noteId)
+        && existing().authorId == request.auth.uid
+        && isValidManagerNote(incoming())
+        && incoming().id == existing().id
+        && incoming().authorId == existing().authorId
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'category', 'zoneId', 'content', 'updatedAt']);
+
+      allow delete: if isManager() && isValidId(noteId);
+    }
+  }
+}

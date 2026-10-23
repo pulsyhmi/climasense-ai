@@ -1,0 +1,6 @@
+{
+  "name": "ClimaSense AI",
+  "description": "AI-powered climate resilience platform for sustainable townships - Sime Darby Hackathon prototype for City of Elmina.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

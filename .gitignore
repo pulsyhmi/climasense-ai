@@ -1,0 +1,60 @@
+# ==========================================
+# ClimaSense AI - .gitignore
+# ==========================================
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Production Build Outputs
+dist/
+build/
+out/
+
+# Environment Variables & Secrets (CRITICAL)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+!.env.example
+
+# Service Account Keys & Private Credentials
+*.pem
+*.key
+*.pkcs12
+*.p12
+*.cert
+*serviceAccount*.json
+*service-account*.json
+credentials.json
+client_secret*.json
+
+# Logs & Debugging
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Testing & Browser Automation Cache
+coverage/
+.playwright-cli/
+test-results/
+
+# Editor & OS Metadata
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# AI Studio Build Caches & Artifacts
+.vite/
+.cache/
+.aistudio/artifacts/
+

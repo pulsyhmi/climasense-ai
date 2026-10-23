@@ -1,0 +1,139 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Resident or manager profile with climate alert preferences and role",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 256 },
+        "displayName": { "type": "string", "maxLength": 100 },
+        "role": { "type": "string", "enum": ["resident", "township_manager"] },
+        "townshipId": { "type": "string", "maxLength": 64 },
+        "preferences": {
+          "type": "object",
+          "properties": {
+            "alertHeat": { "type": "boolean" },
+            "alertRain": { "type": "boolean" },
+            "alertAqi": { "type": "boolean" },
+            "preferredZone": { "type": "string", "maxLength": 64 }
+          },
+          "required": ["alertHeat", "alertRain", "alertAqi"]
+        },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["userId", "email", "displayName", "role", "townshipId", "preferences", "createdAt"]
+    },
+    "TownshipManagerDoc": {
+      "title": "TownshipManagerDoc",
+      "description": "Verified authority record in managers collection granting township management privileges",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "role": { "type": "string", "enum": ["township_manager"] },
+        "assignedTownshipId": { "type": "string", "maxLength": 64 },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["userId", "role", "assignedTownshipId", "createdAt"]
+    },
+    "GreenActivityRecord": {
+      "title": "GreenActivityRecord",
+      "description": "Logged sustainable habit or action performed by a resident",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "userName": { "type": "string", "maxLength": 100 },
+        "category": {
+          "type": "string",
+          "enum": ["tree_planting", "cycling", "walking", "recycling", "energy_conservation", "water_conservation", "composting", "food_waste"]
+        },
+        "title": { "type": "string", "maxLength": 150 },
+        "metricDescription": { "type": "string", "maxLength": 150 },
+        "pointsAwarded": { "type": "number" },
+        "townshipId": { "type": "string", "maxLength": 64 },
+        "notes": { "type": "string", "maxLength": 500 },
+        "timestamp": { "type": "string", "maxLength": 64 },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "userId", "userName", "category", "title", "metricDescription", "pointsAwarded", "townshipId", "createdAt"]
+    },
+    "RewardBalance": {
+      "title": "RewardBalance",
+      "description": "Accrued eco-points and tier status for a resident",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "points": { "type": "number" },
+        "lifetimePoints": { "type": "number" },
+        "tier": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["userId", "points", "lifetimePoints", "tier", "updatedAt"]
+    },
+    "TownshipConfigDoc": {
+      "title": "TownshipConfigDoc",
+      "description": "Central township environmental configuration and risk threshold cutoffs",
+      "type": "object",
+      "properties": {
+        "townshipId": { "type": "string", "maxLength": 64 },
+        "name": { "type": "string", "maxLength": 100 },
+        "heatModerateC": { "type": "number" },
+        "heatElevatedC": { "type": "number" },
+        "rainModerateMm": { "type": "number" },
+        "rainElevatedMm": { "type": "number" },
+        "aqiModerate": { "type": "number" },
+        "aqiElevated": { "type": "number" },
+        "greenTargetPct": { "type": "number" },
+        "updatedAt": { "type": "string", "maxLength": 64 },
+        "updatedBy": { "type": "string", "maxLength": 128 }
+      },
+      "required": ["townshipId", "name", "heatModerateC", "heatElevatedC", "rainModerateMm", "rainElevatedMm", "aqiModerate", "aqiElevated", "greenTargetPct", "updatedAt"]
+    },
+    "ManagerNote": {
+      "title": "ManagerNote",
+      "description": "Actionable township climate advisory, zone maintenance notice or intervention memo",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "townshipId": { "type": "string", "maxLength": 64 },
+        "title": { "type": "string", "maxLength": 150 },
+        "zoneId": { "type": "string", "maxLength": 64 },
+        "category": { "type": "string", "enum": ["heat_advisory", "drainage_maintenance", "tree_planting", "infrastructure"] },
+        "content": { "type": "string", "maxLength": 1000 },
+        "authorId": { "type": "string", "maxLength": 128 },
+        "authorName": { "type": "string", "maxLength": 100 },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "townshipId", "title", "zoneId", "category", "content", "authorId", "authorName", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Resident and manager profile records with preferences and role metadata"
+    },
+    "/managers/{userId}": {
+      "schema": "TownshipManagerDoc",
+      "description": "Verified authority records conferring township management permissions"
+    },
+    "/green_activities/{activityId}": {
+      "schema": "GreenActivityRecord",
+      "description": "Logged sustainability activities created and read by the author resident"
+    },
+    "/reward_balances/{userId}": {
+      "schema": "RewardBalance",
+      "description": "Resident eco-points balance, lifetime points, and milestone tier"
+    },
+    "/township_configs/{townshipId}": {
+      "schema": "TownshipConfigDoc",
+      "description": "Township-wide risk threshold configurations, readable by residents and editable by managers"
+    },
+    "/manager_notes/{noteId}": {
+      "schema": "ManagerNote",
+      "description": "Township climate management memos, readable by all residents and manageable by township managers"
+    }
+  }
+}

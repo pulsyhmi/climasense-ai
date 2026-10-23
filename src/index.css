@@ -1,0 +1,131 @@
+@import "tailwindcss";
+
+:root {
+  /* Sime Darby Property Inspired Heritage Red & Warm Gold Tokens */
+  --color-heritage-red: #C8102E;
+  --color-heritage-red-hover: #A50D24;
+  --color-heritage-red-subtle: #FFF1F3;
+  --color-heritage-red-border: #FECDCA;
+
+  --color-warm-gold: #D97706;
+  --color-warm-gold-accent: #EAAA08;
+  --color-warm-gold-subtle: #FFFBEB;
+  --color-warm-gold-border: #FDE68A;
+
+  --color-forest-green: #166534;
+  --color-forest-green-emerald: #15803D;
+  --color-forest-green-subtle: #F0FDF4;
+  --color-forest-green-border: #BBF7D0;
+
+  --color-charcoal-navy: #0F172A;
+  --color-charcoal-text: #1E293B;
+  --color-muted-slate: #64748B;
+  --color-subtle-border: #E2E8F0;
+
+  --color-bg-canvas: #F8F9FA;
+  --color-bg-card: #FFFFFF;
+  --color-bg-ivory: #FAFAF8;
+
+  /* Climate Risk Indicators */
+  --risk-low: #15803D;
+  --risk-moderate: #D97706;
+  --risk-elevated: #EA580C;
+  --risk-high: #C8102E;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--color-bg-canvas);
+  color: var(--color-charcoal-text);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom utility classes matching Sime Darby brand palette */
+.bg-heritage-red {
+  background-color: var(--color-heritage-red);
+}
+
+.bg-heritage-red-hover:hover {
+  background-color: var(--color-heritage-red-hover);
+}
+
+.text-heritage-red {
+  color: var(--color-heritage-red);
+}
+
+.border-heritage-red {
+  border-color: var(--color-heritage-red);
+}
+
+.bg-warm-gold {
+  background-color: var(--color-warm-gold);
+}
+
+.text-warm-gold {
+  color: var(--color-warm-gold);
+}
+
+.border-warm-gold {
+  border-color: var(--color-warm-gold);
+}
+
+/* Primary Brand Action Button */
+.btn-primary-sd {
+  background-color: var(--color-heritage-red);
+  color: #FFFFFF;
+  font-weight: 700;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px -2px rgba(200, 16, 46, 0.25);
+}
+
+.btn-primary-sd:hover {
+  background-color: var(--color-heritage-red-hover);
+  box-shadow: 0 6px 16px -2px rgba(200, 16, 46, 0.35);
+  transform: translateY(-1px);
+}
+
+.btn-primary-sd:active {
+  transform: translateY(0);
+}
+
+/* Secondary Action Button */
+.btn-secondary-sd {
+  background-color: #FFFFFF;
+  color: #1E293B;
+  border: 1px solid #E2E8F0;
+  font-weight: 600;
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-secondary-sd:hover {
+  background-color: #F8F9FA;
+  border-color: #CBD5E1;
+  color: #0F172A;
+}
+
+/* Subtle card styling */
+.brand-card {
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.02);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.brand-card:hover {
+  border-color: #CBD5E1;
+  box-shadow: 0 6px 16px -4px rgba(15, 23, 42, 0.07), 0 2px 6px -2px rgba(15, 23, 42, 0.04);
+}
+
+/* Custom range sliders */
+input[type="range"] {
+  accent-color: var(--color-heritage-red);
+}
+
